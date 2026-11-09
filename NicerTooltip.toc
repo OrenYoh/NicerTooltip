@@ -6,6 +6,7 @@
 ## Version: 1.0.0
 ## IconTexture: Interface\Icons\INV_Misc_Note_01
 ## SavedVariables: NicerTooltipDB
+## X-Curse-Project-ID: 1793783
 
 Config.lua
 Media.lua
