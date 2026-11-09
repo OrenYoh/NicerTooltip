@@ -1,0 +1,8 @@
+package-as: NicerTooltip
+
+ignore:
+  - .github
+  - .gitignore
+  - .pkgmeta
+  - src
+  - tools

@@ -1,0 +1,31 @@
+name: Package and release
+
+on:
+    push:
+        tags:
+            - 'v**'
+
+permissions:
+    contents: write
+
+env:
+    CF_API_KEY: ${{ secrets.CURSE_TOKEN }}
+    WAGO_API_TOKEN: ${{ secrets.WAGO_API_TOKEN }}
+
+jobs:
+    release:
+        runs-on: ubuntu-latest
+
+        env:
+            GITHUB_OAUTH: ${{ secrets.GITHUB_TOKEN }}
+
+        steps:
+            - name: Clone project
+              uses: actions/checkout@v7
+              with:
+                  fetch-depth: 0
+
+            - name: Package and release
+              uses: BigWigsMods/packager@v2.7.0
+              with:
+                  args: -n "{package-name}-{project-version}{nolib}{classic}:{package-name}-{project-version}{classic}{nolib}"

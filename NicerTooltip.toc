@@ -1,0 +1,13 @@
+## Interface: 120105, 50504, 40402, 38002, 30405, 20506, 16001, 11509
+## Title: Nicer Tooltip
+## Category: Tooltip
+## Notes: Gives tooltips an ornate frame with themed backgrounds.
+## Author: OrenYoh
+## Version: 1.0.0
+## IconTexture: Interface\Icons\INV_Misc_Note_01
+## SavedVariables: NicerTooltipDB
+
+Config.lua
+Media.lua
+NicerTooltip.lua
+Options.lua

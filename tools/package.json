@@ -1,0 +1,11 @@
+{
+  "name": "nicertooltip-tools",
+  "private": true,
+  "description": "Builds media/ and Media.lua from the source artwork in src/",
+  "scripts": {
+    "build": "node build-media.js"
+  },
+  "devDependencies": {
+    "sharp": "0.33.5"
+  }
+}
