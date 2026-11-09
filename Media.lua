@@ -10,7 +10,7 @@ ns.Media = {
     neutral = { aspect = 1.931, fill = { 0.351, 0.221, 0.049 } },
     creature_ally = { aspect = 1.931, fill = { 0.165, 0.206, 0.063 } },
     creature_enemy = { aspect = 1.869, fill = { 0.253, 0.053, 0.04 } },
-    creature_neutral = { aspect = 1.931, fill = { 0.351, 0.221, 0.049 } },
+    creature_neutral = { file = "neutral", aspect = 1.931, fill = { 0.351, 0.221, 0.049 } },
     dead = { aspect = 1.782, fill = { 0.147, 0.141, 0.137 } },
     spell = { aspect = 1.931, fill = { 0.284, 0.158, 0.07 } },
     item = { aspect = 1.931, fill = { 0.203, 0.168, 0.164 } },

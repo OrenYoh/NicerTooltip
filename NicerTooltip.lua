@@ -603,7 +603,7 @@ local function Update(tooltip)
     skin.theme, skin.bgTheme = theme, bgTheme
     local m = Media.backgrounds[bgTheme]
     local brightness, alpha = db().bgBrightness, db().bgOpacity
-    skin.bg:SetTexture(MEDIA .. "background_" .. bgTheme .. ".png")
+    skin.bg:SetTexture(MEDIA .. "background_" .. (m.file or bgTheme) .. ".png")
     skin.bg:SetVertexColor(brightness, brightness, brightness)
     local r, g, b = m.fill[1] * brightness, m.fill[2] * brightness, m.fill[3] * brightness
     skin.fillLeft:SetColorTexture(r, g, b)

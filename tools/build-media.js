@@ -61,8 +61,16 @@ async function load(file) {
   return { data, W: info.width, H: info.height };
 }
 
-function save(img, file) {
-  return sharp(img.data, { raw: { width: img.W, height: img.H, channels: 4 } }).png({ compressionLevel: 9 }).toFile(file);
+// Lossless PNG. opaque: drop the alpha channel (the image must be fully opaque).
+function encode(img, opaque) {
+  let s = sharp(img.data, { raw: { width: img.W, height: img.H, channels: 4 } });
+  if (opaque) s = s.removeAlpha();
+  // Do not set "effort", "colours" or "quality": they switch to a lossy palette.
+  return s.png({ compressionLevel: 9, adaptiveFiltering: true }).toBuffer();
+}
+
+async function save(img, file, opaque) {
+  fs.writeFileSync(file, await encode(img, opaque));
 }
 
 function crop(img, x, y, w, h) {
@@ -171,6 +179,7 @@ const r3 = (v) => Math.round(v * 1000) / 1000;
   }
 
   // ---------------------------------------------------------- backgrounds
+  const written = {}; // theme -> PNG buffer
   for (const t of BG_THEMES) {
     const cfg = BACKGROUNDS[t] || {};
     const img = await load(path.join(SRC, "backgrounds", cfg.file || `background_${t}.png`));
@@ -210,8 +219,13 @@ const r3 = (v) => Math.round(v * 1000) / 1000;
         c.data[i + 3] = 255;
       }
     }
-    await save(await resize(c, 512, 256), path.join(OUT, `background_${t}.png`));
-    meta.backgrounds[t] = { aspect: r3(c.W / c.H), fill: [r3(R / 255), r3(G / 255), r3(B / 255)] };
+    // Themes that end up with the same texture share one file.
+    const png = await encode(await resize(c, 512, 256), true);
+    const file = Object.keys(written).find((k) => written[k].equals(png));
+    const out = path.join(OUT, `background_${t}.png`);
+    if (file) fs.rmSync(out, { force: true });
+    else { written[t] = png; fs.writeFileSync(out, png); }
+    meta.backgrounds[t] = { file, aspect: r3(c.W / c.H), fill: [r3(R / 255), r3(G / 255), r3(B / 255)] };
   }
 
   // ---------------------------------------------------------------- frame
@@ -239,7 +253,7 @@ const r3 = (v) => Math.round(v * 1000) / 1000;
   lua.push(`  frame = { border = ${meta.frame.border} },`);
   lua.push(`  slot = { height = ${meta.slot.height}, innerLeft = ${meta.slot.innerLeft}, innerTop = ${meta.slot.innerTop}, innerBottom = ${meta.slot.innerBottom} },`);
   lua.push("  backgrounds = {");
-  for (const t of BG_THEMES) { const m = meta.backgrounds[t]; lua.push(`    ${t} = { aspect = ${m.aspect}, fill = { ${m.fill.join(", ")} } },`); }
+  for (const t of BG_THEMES) { const m = meta.backgrounds[t]; lua.push(`    ${t} = { ${m.file ? `file = "${m.file}", ` : ""}aspect = ${m.aspect}, fill = { ${m.fill.join(", ")} } },`); }
   const m = meta.separator;
   lua.push("  },", `  separator = { top = ${m.top}, bottom = ${m.bottom}, left = ${m.left}, right = ${m.right}, aspect = ${m.aspect}, medallion = ${m.medallion} },`);
   lua.push("}", "");
