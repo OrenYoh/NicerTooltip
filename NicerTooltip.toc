@@ -3,7 +3,7 @@
 ## Category: Tooltip
 ## Notes: Gives tooltips an ornate frame with themed backgrounds.
 ## Author: OrenYoh
-## Version: 1.0.1
+## Version: 2.0.0
 ## IconTexture: Interface\Icons\INV_Misc_Note_01
 ## SavedVariables: NicerTooltipDB
 ## X-Curse-Project-ID: 1793783
