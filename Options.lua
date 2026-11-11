@@ -59,9 +59,25 @@ local function Register(layoutCategory, layout)
 
   Header("Name")
   Checkbox("showLevel", "Show Level", "Show the level of players and NPCs after their name, in parentheses: Name (60).")
+  Dropdown("portrait", "Portrait", "What the gold medallion in the top-left corner of player and NPC tooltips shows. Show Portrait: the unit's portrait (players too far away to be seen get their class icon). Show Class Icon: the class icon, for players only. Hide: no medallion.", function()
+    local container = Settings.CreateControlTextContainer()
+    container:Add("portrait", "Show Portrait")
+    container:Add("class", "Show Class Icon")
+    container:Add("hide", "Hide")
+    return container:GetData()
+  end)
+
+  Checkbox("frameHint", "Right-Click Hint", "Show the green \"<Right click for Frame Settings>\" line on the tooltips of unit frames (your portrait, target, party...).")
+
+  Header("Realm Info")
+  local REALM_NOTE = " Only for realms the game version is known for (not WoW Forever), and not in Compact."
+  Checkbox("realmLanguage", "Realm Language", "Show the language of the player's realm." .. REALM_NOTE)
+  Checkbox("realmType", "Realm Type", "Show the type of the player's realm (PvE, PvP, RP...)." .. REALM_NOTE)
+  Checkbox("realmName", "Realm and Connected Realms", "Show the player's realm and the realms connected to it." .. REALM_NOTE)
 
   Header("Size and Position")
-  Slider("minWidth", "Minimum Width", "Tooltips are never narrower than this.", 0, 500, 10, Plain)
+  Checkbox("compact", "Compact", "A smaller tooltip: no minimum width and no separator. Players get two lines (faction logo, name and level, then PvP, race and guild or faction), and the portrait medallion moves to the left edge.")
+  Slider("minWidth", "Minimum Width", "Tooltips are never narrower than this (not used in Compact).", 0, 500, 10, Plain)
   Checkbox("followCursor", "Follow Cursor", "Tooltips that normally appear in the bottom-right corner (or where Edit Mode's HUD Tooltip is) follow the mouse cursor instead. Tooltips shown next to what you hover (bags, action bars...) are not affected.")
 
   -- "Keep on Cursor" only exists while Follow Cursor is on.

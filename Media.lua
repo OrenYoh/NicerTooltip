@@ -18,6 +18,11 @@ ns.Media = {
     mineral = { aspect = 1.931, fill = { 0.176, 0.099, 0.066 } },
     buff = { aspect = 1.931, fill = { 0.381, 0.389, 0.155 } },
     debuff = { aspect = 1.931, fill = { 0.357, 0.118, 0.097 } },
+    compact_blue = { compact = true, aspect = 1.5, fill = { 0.05, 0.098, 0.225 } },
+    compact_red = { compact = true, aspect = 1.5, fill = { 0.229, 0.011, 0.004 } },
+    compact_green = { compact = true, aspect = 1.5, fill = { 0.034, 0.229, 0.005 } },
+    compact_yellow = { compact = true, aspect = 1.5, fill = { 0.335, 0.191, 0.003 } },
   },
   separator = { top = 0.234, bottom = 0.75, left = 0.432, right = 0.58, aspect = 7.758, medallion = 0.148 },
+  medallion = { hole = 0.766 },
 }

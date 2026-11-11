@@ -17,8 +17,15 @@ ns.defaults = {
   logoSize = 16,
   -- Name
   showLevel = false,    -- "Name (60)" on units
+  portrait = "portrait", -- medallion on unit tooltips: "portrait", "class" (icon) or "hide"
+  frameHint = false,    -- unit frames' "<Right click for Frame Settings>" line
+  -- Realm info on player tooltips (where LibRealmInfo knows the realm; not in Compact)
+  realmLanguage = true,
+  realmType = true,
+  realmName = true,     -- the realm and its connected realms
   -- Size and position
   minWidth = 280,
+  compact = false,      -- smaller unit tooltips, no minimum width or separator
   followCursor = false, -- default-positioned tooltips follow the cursor
   combatMode = "default", -- in combat: "hide", "default" (position) or "cursor"
 }
