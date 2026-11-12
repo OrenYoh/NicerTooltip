@@ -2,6 +2,10 @@ local addonName, ns = ...
 local Media = ns.Media
 
 local MEDIA = "Interface\\AddOns\\" .. addonName .. "\\media\\"
+-- Blizzard's own, kept before other addons hook it at login: Animated Default
+-- Portraits turns every SetPortraitTexture texture into a model frame, which
+-- the medallion can't hide (it stayed on later tooltips).
+local SetPortraitTexture = SetPortraitTexture
 
 -- Layout (in UI units). The frame art is drawn slightly outside the tooltip
 -- so its ornate corners don't sit on top of the first line of text.
