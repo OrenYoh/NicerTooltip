@@ -299,6 +299,8 @@ local function LayoutBackground(skin, tooltip)
   fillLeft:SetPoint("BOTTOMLEFT", tooltip, "BOTTOMLEFT", -BG_INSET, -BG_INSET)
   local bg = skin.bg
   bg:ClearAllPoints()
+  -- The size this layout was made for (see OnUpdate in Skin).
+  skin.laidW, skin.laidH = safe(tooltip:GetWidth()), safe(tooltip:GetHeight())
 
   -- Compact backgrounds cover the whole tooltip, stretched (no measuring).
   if m.compact and db().showArt then
@@ -1131,6 +1133,21 @@ local function OnSizeChanged(tooltip)
   end
 end
 
+-- The tooltip can change size without OnSizeChanged reaching the layout
+-- (it's skipped while Update runs, and some tooltips grow later: the world
+-- map, the calendar, the game menu buttons...): the background was then
+-- left at the old size. Check it every frame, it's cheap.
+local function OnUpdate(tooltip)
+  local skin = skins[tooltip]
+  if not skin or updating or not skin.theme then
+    return
+  end
+  local w, h = safe(tooltip:GetWidth()), safe(tooltip:GetHeight())
+  if w ~= skin.laidW or h ~= skin.laidH then
+    Layout(skin, tooltip)
+  end
+end
+
 local function OnCleared(tooltip)
   local skin = skins[tooltip]
   if skin then
@@ -1162,7 +1179,13 @@ local function Skin(tooltip)
   tooltip:HookScript("OnHide", function()
     skin.defaultOwner = nil
   end)
+  -- Tooltips refreshed while shown (owner:UpdateTooltip every 0.2s: mail
+  -- items, the calendar, game menu buttons, world map pins...) are cleared
+  -- and filled again, then Show() is called without OnShow firing: the
+  -- minimum width, gap, theme and background were lost.
+  hooksecurefunc(tooltip, "Show", Update)
   tooltip:HookScript("OnSizeChanged", OnSizeChanged)
+  tooltip:HookScript("OnUpdate", OnUpdate)
   if tooltip:HasScript("OnTooltipCleared") then
     tooltip:HookScript("OnTooltipCleared", OnCleared)
   end
