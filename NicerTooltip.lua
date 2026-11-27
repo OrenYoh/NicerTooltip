@@ -60,6 +60,11 @@ end
 ---------------------------------------------------------------------------
 
 local FACTION_THEMES = { Alliance = "alliance", Horde = "horde" }
+-- Mercenaries (battlegrounds) fight for the other faction: their background
+-- is the side they fight for, as Blizzard's unit frames do for the PvP icon
+-- (UnitFrameUtil), and their logo stays on their own faction, by its name.
+local OTHER_FACTION = { alliance = "horde", horde = "alliance" }
+local UnitIsMercenary = UnitIsMercenary
 
 local function GetReactionTheme(unit)
   local reaction = safe(UnitReaction(unit, "player"))
@@ -83,6 +88,9 @@ local function GetUnitThemes(unit)
   local factionTheme = FACTION_THEMES[safe(UnitFactionGroup(unit)) or ""]
   if safe(UnitIsPlayer(unit)) then
     local theme = factionTheme or "neutral"
+    if UnitIsMercenary and OTHER_FACTION[theme] and safe(UnitIsMercenary(unit)) then
+      return OTHER_FACTION[theme], theme
+    end
     return theme, theme
   end
   local creatureTheme = GetReactionTheme(unit)
@@ -113,12 +121,38 @@ local function GetCompactBackground(unit)
   return "compact_yellow"
 end
 
+-- In PvP (12.x), the unit token of a unit tooltip can be secret (it comes
+-- from the tooltip's GUID): only the target's is readable. Unit tooltips are
+-- shown for what's under the cursor, so the "mouseover" token, readable,
+-- stands in for it (unless both GUIDs can be read and differ).
+local UNIT_TOOLTIP = Enum and Enum.TooltipDataType and Enum.TooltipDataType.Unit
+
+local function IsUnitTooltip(tooltip)
+  return UNIT_TOOLTIP ~= nil and tooltip.IsTooltipType ~= nil and tooltip:IsTooltipType(UNIT_TOOLTIP) == true
+end
+
+local function GetMouseoverUnit(tooltip, guid)
+  if not IsUnitTooltip(tooltip) then
+    return nil
+  end
+  if not safe(UnitExists("mouseover")) then
+    return nil
+  end
+  -- UnitGUID may refuse some tokens in PvP: then don't compare.
+  local ok, mouseoverGUID = pcall(UnitGUID, "mouseover")
+  mouseoverGUID = ok and safe(mouseoverGUID) or nil
+  if guid and mouseoverGUID and guid ~= mouseoverGUID then
+    return nil
+  end
+  return "mouseover"
+end
+
 local function GetTooltipUnit(tooltip)
   if not tooltip.GetUnit then
     return nil
   end
-  local _, unit = tooltip:GetUnit()
-  return safe(unit)
+  local _, unit, guid = tooltip:GetUnit()
+  return safe(unit) or GetMouseoverUnit(tooltip, safe(guid))
 end
 
 ---------------------------------------------------------------------------
@@ -1073,6 +1107,8 @@ local function Update(tooltip)
   local theme, logoTheme, pvpTheme = GetUnitThemes(unit)
   theme = theme or "neutral"
   skin.logoTheme, skin.pvpTheme = logoTheme, pvpTheme
+  -- A unit tooltip whose unit can't be read yet: tried again (see OnUpdate).
+  skin.unitPending = not unit and IsUnitTooltip(tooltip)
   -- Dead units (NPCs and players, ghosts included) get the dead background;
   -- their logo keeps the unit's theme.
   -- Buffs and debuffs, spells and abilities, items, herbs and mineral veins
@@ -1128,7 +1164,13 @@ end
 
 local function OnSizeChanged(tooltip)
   local skin = skins[tooltip]
-  if skin and not updating then
+  if not skin or updating then
+    return
+  end
+  -- Cleared and refilled while shown (see OnUpdate): the whole look.
+  if not skin.theme then
+    Update(tooltip)
+  else
     Layout(skin, tooltip)
   end
 end
@@ -1137,9 +1179,19 @@ end
 -- (it's skipped while Update runs, and some tooltips grow later: the world
 -- map, the calendar, the game menu buttons...): the background was then
 -- left at the old size. Check it every frame, it's cheap.
+-- Tooltips refilled while shown without Show or OnShow following (the
+-- SetText hook in Skin covers the world map's group member pins) get the
+-- whole look again here, or the background stayed at the old size.
+-- Unit tooltips shown before their unit could be read (see GetTooltipUnit:
+-- in PvP, from unit frames, "mouseover" isn't set yet) are updated again
+-- once it can: they kept the neutral background.
 local function OnUpdate(tooltip)
   local skin = skins[tooltip]
-  if not skin or updating or not skin.theme then
+  if not skin or updating then
+    return
+  end
+  if not skin.theme or (skin.unitPending and GetTooltipUnit(tooltip)) then
+    Update(tooltip)
     return
   end
   local w, h = safe(tooltip:GetWidth()), safe(tooltip:GetHeight())
@@ -1184,6 +1236,11 @@ local function Skin(tooltip)
   -- and filled again, then Show() is called without OnShow firing: the
   -- minimum width, gap, theme and background were lost.
   hooksecurefunc(tooltip, "Show", Update)
+  -- The world map's group member pins list the hovered players' names with
+  -- SetText alone (it clears the tooltip and shows it again from C, Show
+  -- isn't called), every frame in battlegrounds and raids: done next frame,
+  -- the old background stuck out of the tooltip for a frame.
+  hooksecurefunc(tooltip, "SetText", Update)
   tooltip:HookScript("OnSizeChanged", OnSizeChanged)
   tooltip:HookScript("OnUpdate", OnUpdate)
   if tooltip:HasScript("OnTooltipCleared") then
@@ -1257,6 +1314,18 @@ combatWatcher:SetScript("OnEvent", function()
   if skin and GameTooltip:IsShown() and db().combatMode == "hide" and skin.defaultOwner
     and GameTooltip:GetOwner() == skin.defaultOwner then
     GameTooltip:Hide()
+  end
+end)
+
+-- The mouseover unit is set: unit tooltips waiting for it are updated right
+-- away (OnUpdate would only do it on the next frame).
+local mouseoverWatcher = CreateFrame("Frame")
+mouseoverWatcher:RegisterEvent("UPDATE_MOUSEOVER_UNIT")
+mouseoverWatcher:SetScript("OnEvent", function()
+  for tooltip, skin in pairs(skins) do
+    if skin.unitPending and tooltip:IsShown() then
+      Update(tooltip)
+    end
   end
 end)
 
